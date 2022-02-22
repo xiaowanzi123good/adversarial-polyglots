@@ -3,7 +3,8 @@ from pythainlp.tokenize import word_tokenize
 from pathlib import Path
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--data_dir", "-d", default=None, type=str, required=True, help="The input data directory, e.g., 'data'. Files are expected to be named 'xquad.<lg>.json'")
+parser.add_argument("--data_dir", "-d", default=None, type=str, required=True,
+                    help="The input data directory, e.g., 'data'. Files are expected to be named 'xquad.<lg>.json'")
 parser.add_argument("--matrix", "-m", default='en', type=str, required=True, help="The matrix language.")
 parser.add_argument("--output", "-o", default='../dictionaries', type=str, required=True, help="The output directory.")
 
@@ -11,10 +12,12 @@ parser.add_argument("--output", "-o", default='../dictionaries', type=str, requi
 
 
 data = {}
+args = parser.parse_args()
 
 for lg in ['en', 'es', 'de', 'el', 'ru', 'tr', 'ar', 'vi', 'th', 'zh', 'hi']:
-    xquad_lg_data = json.load(open(Path(args.data_dir, 'xquad.'+lg+'.json'), 'r'))
-    for article in xquad_lg_data['data']:
+    # xquad_lg_data = json.load(open(Path(args.data_dir, 'xquad.' + lg + '.json'), 'r'))
+    squad_lg_data = json.load(open(Path(args.data_dir, 'squad.' + lg + '.json'), 'r'))
+    for article in squad_lg_data['data']:
         for paragraph in article['paragraphs']:
             for qa in paragraph['qas']:
                 question = qa['question']
@@ -23,13 +26,13 @@ for lg in ['en', 'es', 'de', 'el', 'ru', 'tr', 'ar', 'vi', 'th', 'zh', 'hi']:
 
                 if lg == 'th':
                     question = ' '.join(word_tokenize(qa['question']))
-
-				if not data.get(qa['id']):
-		            data[qa['id']] = {}
+                if not data.get(qa['id']):
+                    data[qa['id']] = {}
                 data[qa['id']][lg] = question
 
 new_data = {}
-for k,v in data.items():
+for k, v in data.items():
     new_data[v[args.matrix]] = v
 
-json.dump(new_data, open(Path(args.output,'xquad-question-reference-translations-'+args.matrix+'-head.json'),'w'), indent=False, ensure_ascii=False)
+json.dump(new_data, open(Path(args.output, 'xquad-question-reference-translations-' + args.matrix + '-head.json'), 'w'),
+          indent=False, ensure_ascii=False)

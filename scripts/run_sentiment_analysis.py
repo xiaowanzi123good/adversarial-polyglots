@@ -20,12 +20,19 @@ import logging
 import os
 import random
 import sys
-from dataclasses import dataclass, field
+from dataclasses import (
+    dataclass,
+    field,
+)
 from typing import Optional
 
 import datasets
 import numpy as np
-from datasets import load_dataset, load_metric, DatasetDict
+from datasets import (
+    load_dataset,
+    load_metric,
+    DatasetDict,
+)
 
 import transformers
 from transformers import (
@@ -45,10 +52,9 @@ from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import check_min_version
 from transformers.utils.versions import require_version
 
-
 # +
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
-#check_min_version("4.12.0.dev0")
+# check_min_version("4.12.0.dev0")
 # -
 
 require_version("datasets>=1.8.0", "To fix: pip install -r examples/pytorch/text-classification/requirements.txt")
@@ -93,7 +99,7 @@ class DataTrainingArguments:
         default=128,
         metadata={
             "help": "The maximum total input sequence length after tokenization. Sequences longer "
-            "than this will be truncated, sequences shorter will be padded."
+                    "than this will be truncated, sequences shorter will be padded."
         },
     )
     overwrite_cache: bool = field(
@@ -103,28 +109,28 @@ class DataTrainingArguments:
         default=True,
         metadata={
             "help": "Whether to pad all samples to `max_seq_length`. "
-            "If False, will pad the samples dynamically when batching to the maximum length in the batch."
+                    "If False, will pad the samples dynamically when batching to the maximum length in the batch."
         },
     )
     max_train_samples: Optional[int] = field(
         default=None,
         metadata={
             "help": "For debugging purposes or quicker training, truncate the number of training examples to this "
-            "value if set."
+                    "value if set."
         },
     )
     max_eval_samples: Optional[int] = field(
         default=None,
         metadata={
             "help": "For debugging purposes or quicker training, truncate the number of evaluation examples to this "
-            "value if set."
+                    "value if set."
         },
     )
     max_predict_samples: Optional[int] = field(
         default=None,
         metadata={
             "help": "For debugging purposes or quicker training, truncate the number of prediction examples to this "
-            "value if set."
+                    "value if set."
         },
     )
     train_file: Optional[str] = field(
@@ -147,12 +153,12 @@ class DataTrainingArguments:
         elif self.train_file:
             train_extension = self.train_file.split(".")[-1]
             assert train_extension in ["tsv", "csv", "json"], "`train_file` should be a csv or a json file."
-        elif self.validation_file: 
+        elif self.validation_file:
             validation_extension = self.validation_file.split(".")[-1]
             assert validation_extension in ["tsv", "csv", "json"]
-            #assert (
+            # assert (
             #    validation_extension == train_extension
-            #), "`validation_file` should have the same extension (csv or json) as `train_file`."
+            # ), "`validation_file` should have the same extension (csv or json) as `train_file`."
 
 
 @dataclass
@@ -186,7 +192,7 @@ class ModelArguments:
         default=False,
         metadata={
             "help": "Will use the token generated when running `transformers-cli login` (necessary to use this script "
-            "with private models)."
+                    "with private models)."
         },
     )
 
@@ -275,7 +281,7 @@ def main():
                 train_extension = data_args.train_file.split(".")[-1]
                 test_extension = data_args.test_file.split(".")[-1]
                 assert (
-                    test_extension == train_extension
+                        test_extension == train_extension
                 ), "`test_file` should have the same extension (csv or json) as `train_file`."
                 data_files["test"] = data_args.test_file
             else:
@@ -284,13 +290,18 @@ def main():
         for key in data_files.keys():
             logger.info(f"load a local file for {key}: {data_files[key]}")
 
-        if (data_args.train_file and data_args.train_file.endswith(".csv")) or (data_args.validation_file and data_args.validation_file.endswith(".csv")):
+        if (data_args.train_file and data_args.train_file.endswith(".csv")) or (
+                data_args.validation_file and data_args.validation_file.endswith(".csv")):
             # Loading a dataset from local csv files
             raw_datasets = load_dataset("csv", data_files=data_files, cache_dir=model_args.cache_dir)
-        elif (data_args.train_file and data_args.train_file.endswith(".tsv")) or (data_args.validation_file and data_args.validation_file.endswith(".tsv")):
+        elif (data_args.train_file and data_args.train_file.endswith(".tsv")) or (
+                data_args.validation_file and data_args.validation_file.endswith(".tsv")):
             # Loading a dataset from local csv files
-            raw_datasets = DatasetDict({"train": load_dataset("csv", delimiter="\t", data_files=data_args.train_file, cache_dir=model_args.cache_dir, split='train'),
-                                        "validation": load_dataset("csv", delimiter="\t", data_files=data_args.validation_file, cache_dir=model_args.cache_dir, split='train')})
+            raw_datasets = DatasetDict({"train": load_dataset("csv", delimiter="\t", data_files=data_args.train_file,
+                                                              cache_dir=model_args.cache_dir, split='train'),
+                                        "validation": load_dataset("csv", delimiter="\t",
+                                                                   data_files=data_args.validation_file,
+                                                                   cache_dir=model_args.cache_dir, split='train')})
         else:
             # Loading a dataset from local json files
             raw_datasets = load_dataset("json", data_files=data_files, cache_dir=model_args.cache_dir)
@@ -313,7 +324,7 @@ def main():
         else:
             # A useful fast method:
             # https://huggingface.co/docs/datasets/package_reference/main_classes.html#datasets.Dataset.unique
-            label_list = raw_datasets["train"].unique("label") #["negative", "neutral", "positive"] 
+            label_list = raw_datasets["train"].unique("label")  # ["negative", "neutral", "positive"]
             label_list.sort()  # Let's sort it for determinism
             num_labels = len(label_list)
 
@@ -374,9 +385,9 @@ def main():
     # Some models have set the order of the labels to use, so let's make sure we do use it.
     label_to_id = None
     if (
-        model.config.label2id != PretrainedConfig(num_labels=num_labels).label2id
-        and data_args.task_name is not None
-        and not is_regression
+            model.config.label2id != PretrainedConfig(num_labels=num_labels).label2id
+            and data_args.task_name is not None
+            and not is_regression
     ):
         # Some have all caps in their config, some don't.
         label_name_to_id = {k.lower(): v for k, v in model.config.label2id.items()}
@@ -454,7 +465,7 @@ def main():
     if data_args.task_name is not None:
         metric = load_metric("glue", data_args.task_name)
     else:
-        #metric = load_metric("accuracy")
+        # metric = load_metric("accuracy")
         metric = load_metric("f1")
 
     # You can define your custom compute_metrics function. It takes an `EvalPrediction` object (a namedtuple with a
@@ -474,7 +485,7 @@ def main():
             if len(result) > 1:
                 result["macroF1"] = np.mean(list(result.values())).item()
             return result
-            #return {"accuracy": (preds == p.label_ids).astype(np.float32).mean().item()}
+            # return {"accuracy": (preds == p.label_ids).astype(np.float32).mean().item()}
 
     # Data collator will default to DataCollatorWithPadding, so we change it if we already did the padding.
     if data_args.pad_to_max_length:
@@ -572,9 +583,9 @@ def main():
         kwargs["dataset_args"] = data_args.task_name
         kwargs["dataset"] = f"GLUE {data_args.task_name.upper()}"
 
-    #if training_args.push_to_hub:
+    # if training_args.push_to_hub:
     #    trainer.push_to_hub(**kwargs)
-    #else:
+    # else:
     #    trainer.create_model_card(**kwargs)
 
 
